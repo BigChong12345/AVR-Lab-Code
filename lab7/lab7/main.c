@@ -10,13 +10,15 @@
 //may need to fix race conditions
 // still need to implement printing every 5 seconds
 
+#define F_CPU 16000000UL
+
 #include <avr/io.h>
-#include "uart.h"
+#include <util/delay.h>
 #include <stdio.h>
 #include <stdbool.h>
 #include <avr/interrupt.h>
+#include "uart.h"
 
-#define F_CPU 16000000UL
 #define BTN0 (!(PORTB.IN & PIN2_bm)) // btn0 is on board button
 #define BTN1 (!(PORTB.IN & PIN5_bm)) // btn1 is off board button on PB5
 
@@ -27,7 +29,7 @@
 volatile bool btn0Pushed = false;
 volatile bool btn1Pushed = false;
 volatile uint8_t debounce_timerCount = 0;
-volatile uint16_t print_timerCount = 0;
+volatile uint16_t print_timerCount = PRINT_COUNT;
 
 // 1ms ISR for Timer TCA0 assuming F_CPU = 16MHz
 // this is the fixed timer, used for timing print and debounce
@@ -51,13 +53,15 @@ void InitTCA1(void)
 	
 	TCA1.SINGLE.CTRLA |= (TCA_SINGLE_CLKSEL_DIV256_gc | TCA_SINGLE_ENABLE_bm); // set prescalar to 
 	
-	PORTMUX.TCAROUTEA |= PORTMUX_TCA1_PORTB_gc;  // waveform will go to PB0
-	PORTB.DIRSET = PIN0_bm; // setting PA0 as output;
+	PORTMUX.TCAROUTEA |= PORTMUX_TCA1_PORTC_gc;  // waveform will go to PB0
+	PORTC.DIRSET = PIN4_bm; // setting PC0 as output;
 }
 
 // TCA0 is timer0 and keeps track of things happening at fixed times like debouncing and printing
 ISR(TCA0_OVF_vect) {
-	print_timerCount = (print_timerCount == 0) ? 0 : print_timerCount - 1; //avoid wrapping issues with unsigned integers
+	if (print_timerCount > 0) {
+	 print_timerCount--;
+	}
 	if (debounce_timerCount > 0) {
 		debounce_timerCount--;
 		if (debounce_timerCount == 0) { // check both buttons with same flag at same time
@@ -72,17 +76,17 @@ ISR(TCA0_OVF_vect) {
 
 // this is the ISR handling PB2 and PB5, when the button is pressed a falling edge is triggered and sent to this ISR
 // debounce_timerCount should be set here because the debounce timer starts whenever the button is pressed
-ISR(PORTB_PORT_vect) // port A interrupt
+ISR(PORTB_PORT_vect) // port B interrupt
 {
 	if (PORTB.INTFLAGS & PIN2_bm) { // interrupt caused by BTN0 being pressed 
-		PORTB.INTFLAGS |= PIN2_bm; // clear interrupt
+		PORTB.INTFLAGS = PIN2_bm; // clear interrupt
 		if (debounce_timerCount == 0) {
 			debounce_timerCount = DEBOUNCE_TIME;
 		}
 	}
 	
 	if (PORTB.INTFLAGS & PIN5_bm) { // interrupt caused by BTN1 being pressed
-		PORTB.INTFLAGS |= PIN5_bm; // clear interrupt
+		PORTB.INTFLAGS = PIN5_bm; // clear interrupt
 		if (debounce_timerCount == 0) {
 			debounce_timerCount = DEBOUNCE_TIME;
 		}
@@ -110,17 +114,15 @@ int main(void)
     /* Replace with your application code */
 	// initialize stuff
 	init_clock();
+	uart_init(3, 9600, NULL);
 	InitTCA0();
 	InitTCA1();
 	initButtonInt();
-	uart_init(3, 9600, NULL);
 	uint8_t freq = 1; // set freq to 1 Hz initially
 	TCA1.SINGLE.CMP0 = (31250/freq) - 1; // see math above
-	print_timerCount = PRINT_COUNT;
 	
 	sei(); // turn on interrupts
-	
-	
+	printf("Is this thing on? \n");	
     while (1) 
     {
 		if (btn0Pushed || btn1Pushed) { // if either button is pushed
@@ -139,7 +141,7 @@ int main(void)
 		
 		if (print_timerCount == 0) {
 			print_timerCount = PRINT_COUNT;
-			printf("Current freq is %d", freq);
+			printf("Current freq is %d\n", freq);
 		}
 	}
 }

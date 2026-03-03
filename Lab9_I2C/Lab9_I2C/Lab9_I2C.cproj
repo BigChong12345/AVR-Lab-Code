@@ -12,9 +12,9 @@
     <OutputFileName>$(MSBuildProjectName)</OutputFileName>
     <OutputFileExtension>.elf</OutputFileExtension>
     <OutputDirectory>$(MSBuildProjectDirectory)\$(Configuration)</OutputDirectory>
-    <AssemblyName>lab7_pt2</AssemblyName>
-    <Name>lab7_pt2</Name>
-    <RootNamespace>lab7_pt2</RootNamespace>
+    <AssemblyName>Lab9_I2C</AssemblyName>
+    <Name>Lab9_I2C</Name>
+    <RootNamespace>Lab9_I2C</RootNamespace>
     <ToolchainFlavour>Native</ToolchainFlavour>
     <KeepTimersRunning>true</KeepTimersRunning>
     <OverrideVtor>false</OverrideVtor>
@@ -121,15 +121,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="main.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="uart-avrdx.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="uart.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <Compile Include="uart.h">
       <SubType>compile</SubType>
     </Compile>
   </ItemGroup>

@@ -1,0 +1,11 @@
+# Microchip Studio / Visual Studio
+.vs/
+Debug/
+Release/
+*.atsuo
+*.user
+*.obj
+*.o
+*.elf
+*.hex
+*.map
