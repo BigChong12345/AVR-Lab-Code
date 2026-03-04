@@ -37,7 +37,7 @@ void TWI_Address(uint8_t Address, uint8_t mode)
 		// Wait for Read/Write Interrupt Flag.
 		uint8_t flag = (mode == TW_WRITE) ? TWI_WIF_bp : TWI_RIF_bp;
 		loop_until_bit_is_set(TWI0.MSTATUS, flag);
-		// if the client didn’t ack, stop the transaction
+		// if the client didnï¿½t ack, stop the transaction
 		if (TWI0.MSTATUS & TWI_RXACK_bm) {
 			TWI_Stop();
 		}
@@ -72,6 +72,15 @@ void TWI_Host_Initialize() //TWI = Two wire interface
 	TWI0.MBAUD = 35; // 16MHz clock; rise time = 10ns
 	TWI0.MCTRLA |= TWI_ENABLE_bm; // enable the I2C
 	TWI0.MSTATUS |= TWI_BUSSTATE_IDLE_gc; // force the bus state to IDLE
+}
+
+
+void init_clock() {
+  CPU_CCP = CCP_IOREG_gc;
+  CLKCTRL.XOSCHFCTRLA =  CLKCTRL_FRQRANGE_16M_gc | CLKCTRL_ENABLE_bm;
+  CPU_CCP = CCP_IOREG_gc;
+  CLKCTRL.MCLKCTRLA = CLKCTRL_CLKSEL_EXTCLK_gc;
+  while(!(CLKCTRL.MCLKSTATUS & CLKCTRL_EXTS_bm));
 }
 
 int main(void)
